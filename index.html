@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>手机刮刮乐</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        h1 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .instructions {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .scratch-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .scratch-card {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1/1;
+            background-color: #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .scratch-cover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #3498db;
+            cursor: pointer;
+            z-index: 2;
+        }
+        
+        .scratch-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 1;
+        }
+        
+        .prize {
+            color: #e74c3c;
+        }
+        
+        .no-prize {
+            color: #7f8c8d;
+        }
+        
+        .result {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .link {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>幸运刮刮乐</h1>
+        
+        <div class="instructions">
+            <p>刮开下面的卡片，有机会赢得200元现金奖励！</p>
+            <p>9个选项中有1个中奖机会</p>
+        </div>
+        
+        <div class="scratch-grid" id="scratchGrid">
+            <!-- 卡片将通过JavaScript动态生成 -->
+        </div>
+        
+        <div class="result" id="result">
+            <h2 id="resultText"></h2>
+            <button class="btn" id="resetBtn">再玩一次</button>
+        </div>
+        
+        <div class="link">
+            <p>分享给你的朋友：<a href="#" id="shareLink">点击复制链接</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const scratchGrid = document.getElementById('scratchGrid');
+            const resultDiv = document.getElementById('result');
+            const resultText = document.getElementById('resultText');
+            const resetBtn = document.getElementById('resetBtn');
+            const shareLink = document.getElementById('shareLink');
+            
+            let hasWon = false;
+            let cardsScratched = 0;
+            let winningCardIndex;
+            
+            // 初始化游戏
+            function initGame() {
+                // 清空网格
+                scratchGrid.innerHTML = '';
+                hasWon = false;
+                cardsScratched = 0;
+                resultDiv.style.display = 'none';
+                
+                // 随机选择一个中奖卡片
+                winningCardIndex = Math.floor(Math.random() * 9);
+                
+                // 创建9张刮刮卡
+                for (let i = 0; i < 9; i++) {
+                    const card = document.createElement('div');
+                    card.className = 'scratch-card';
+                    
+                    const cover = document.createElement('div');
+                    cover.className = 'scratch-cover';
+                    
+                    const content = document.createElement('div');
+                    content.className = 'scratch-content';
+                    
+                    if (i === winningCardIndex) {
+                        content.classList.add('prize');
+                        content.textContent = '200元';
+                    } else {
+                        content.classList.add('no-prize');
+                        content.textContent = '谢谢参与';
+                    }
+                    
+                    // 添加刮刮效果
+                    cover.addEventListener('touchmove', function(e) {
+                        if (this.style.opacity === '0') return;
+                        
+                        const touch = e.touches[0];
+                        const rect = this.getBoundingClientRect();
+                        const x = touch.clientX - rect.left;
+                        const y = touch.clientY - rect.top;
+                        
+                        // 创建一个"刮开"的区域
+                        const circle = document.createElement('div');
+                        circle.style.position = 'absolute';
+                        circle.style.left = (x - 15) + 'px';
+                        circle.style.top = (y - 15) + 'px';
+                        circle.style.width = '30px';
+                        circle.style.height = '30px';
+                        circle.style.borderRadius = '50%';
+                        circle.style.backgroundColor = 'rgba(0,0,0,0)';
+                        circle.style.boxShadow = '0 0 10px 15px rgba(0,0,0,0.1)';
+                        
+                        this.appendChild(circle);
+                        
+                        // 计算透明度
+                        const children = this.children.length;
+                        const opacity = Math.max(0, 1 - children * 0.05);
+                        this.style.opacity = opacity;
+                        
+                        // 如果透明度低于0.3，视为完全刮开
+                        if (opacity <= 0.3 && this.style.opacity !== '0') {
+                            this.style.opacity = '0';
+                            cardsScratched++;
+                            
+                            // 检查是否中奖
+                            if (i === winningCardIndex) {
+                                hasWon = true;
+                                showResult(true);
+                            } else if (cardsScratched === 8 && !hasWon) {
+                                // 如果刮开了8张都没中，自动显示中奖的那张
+                                const cards = document.querySelectorAll('.scratch-card');
+                                const winningCard = cards[winningCardIndex];
+                                const winningCover = winningCard.querySelector('.scratch-cover');
+                                winningCover.style.opacity = '0';
+                                showResult(true);
+                            }
+                        }
+                    });
+                    
+                    // 鼠标事件（为了在部分设备上也能工作）
+                    cover.addEventListener('mousemove', function(e) {
+                        if (this.style.opacity === '0') return;
+                        
+                        const rect = this.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        
+                        // 创建一个"刮开"的区域
+                        const circle = document.createElement('div');
+                        circle.style.position = 'absolute';
+                        circle.style.left = (x - 15) + 'px';
+                        circle.style.top = (y - 15) + 'px';
+                        circle.style.width = '30px';
+                        circle.style.height = '30px';
+                        circle.style.borderRadius = '50%';
+                        circle.style.backgroundColor = 'rgba(0,0,0,0)';
+                        circle.style.boxShadow = '0 0 10px 15px rgba(0,0,0,0.1)';
+                        
+                        this.appendChild(circle);
+                        
+                        // 计算透明度
+                        const children = this.children.length;
+                        const opacity = Math.max(0, 1 - children * 0.05);
+                        this.style.opacity = opacity;
+                        
+                        // 如果透明度低于0.3，视为完全刮开
+                        if (opacity <= 0.3 && this.style.opacity !== '0') {
+                            this.style.opacity = '0';
+                            cardsScratched++;
+                            
+                            // 检查是否中奖
+                            if (i === winningCardIndex) {
+                                hasWon = true;
+                                showResult(true);
+                            } else if (cardsScratched === 8 && !hasWon) {
+                                // 如果刮开了8张都没中，自动显示中奖的那张
+                                const cards = document.querySelectorAll('.scratch-card');
+                                const winningCard = cards[winningCardIndex];
+                                const winningCover = winningCard.querySelector('.scratch-cover');
+                                winningCover.style.opacity = '0';
+                                showResult(true);
+                            }
+                        }
+                    });
+                    
+                    card.appendChild(content);
+                    card.appendChild(cover);
+                    scratchGrid.appendChild(card);
+                }
+            }
+            
+            // 显示结果
+            function showResult(isWinner) {
+                resultDiv.style.display = 'block';
+                if (isWinner) {
+                    resultText.textContent = '恭喜您中了200元大奖！';
+                    resultText.style.color = '#e74c3c';
+                } else {
+                    resultText.textContent = '很遗憾，这次没有中奖！';
+                    resultText.style.color = '#7f8c8d';
+                }
+            }
+            
+            // 重置游戏
+            resetBtn.addEventListener('click', initGame);
+            
+            // 分享链接
+            shareLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = window.location.href;
+                navigator.clipboard.writeText(url).then(() => {
+                    shareLink.textContent = '链接已复制！';
+                    setTimeout(() => {
+                        shareLink.textContent = '点击复制链接';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('无法复制链接:', err);
+                    shareLink.textContent = '请手动复制链接';
+                });
+            });
+            
+            // 初始化游戏
+            initGame();
+        });
+    </script>
+</body>
+</html>
